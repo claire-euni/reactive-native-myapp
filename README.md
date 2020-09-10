@@ -9,6 +9,7 @@
 
 * Feature library : react-navigation/bottom-tabs, react-native-countdown-component, react-native-draggable-flatlist, react-native-modal, react-native-svg 등
 
+* 실제 Unsplash API 사용
 
 * Youtube 완성본 영상 (https://youtu.be/nggiHfOHJeI)
 
