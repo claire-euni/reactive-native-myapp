@@ -1,9 +1,8 @@
-import * as React from 'react';
-import {View, Text, ScrollView, Image, SafeAreaView} from 'react-native';
+import React from 'react';
+import {View, Text, ScrollView, SafeAreaView} from 'react-native';
 import styled from 'styled-components/native';
 import auction from './config';
 import Logo from './Images/logo.svg';
-// import * as ReactDOM from 'react-dom';
 
 const Container = styled.View`
   flex: 1;
@@ -23,7 +22,7 @@ const Title = styled.Text`
   line-height: 30;
 `;
 
-const CurrentAuction = styled.View`
+const CurrentAuction = styled.TouchableOpacity`
   width: 210;
   border: 1px solid #9d9d9d;
   border-radius: 5;
@@ -51,13 +50,7 @@ const TextContainer = styled.View`
   padding-left: 10;
 `;
 
-const Home = ({navigation}) => {
-  const goToAuctionDetail = (idx: number) => {
-    if (idx === 0) {
-      navigation.navigate('SummerAuction');
-    }
-  };
-
+const Home = () => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <Container>

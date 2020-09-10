@@ -1,6 +1,6 @@
 import Home from './Home';
 import Auction from './Auction';
-import Info from './Account';
+import ViewingRoom from './ViewingRoom';
 
 const mainRoutes = [
   {
@@ -16,8 +16,8 @@ const mainRoutes = [
     activeIcon: require('./Images/tooltip.png'),
   },
   {
-    name: 'Info',
-    com: Info,
+    name: 'Viewing',
+    com: ViewingRoom,
     inactiveIcon: require('./Images/account-outline.png'),
     activeIcon: require('./Images/account.png'),
   },

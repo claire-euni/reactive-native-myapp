@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, {useState, useEffect} from 'react';
 import {
   View,
@@ -5,17 +6,23 @@ import {
   Image,
   SafeAreaView,
   FlatList,
-  ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
+import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
-import Logo from './Images/logo.svg';
-import artworks from './artworks';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import CountDown from 'react-native-countdown-component';
+import Popup from './Popup';
+import AuctionPiece from './AuctionPiece';
 
 const Header = styled.View`
-  width: 100%;
   height: 40%;
 `;
+
+const CountDownContainer = styled.View`
+  height: 200;
+  justify-content: center;
+`;
+
 const BidBtn = styled.TouchableOpacity`
   background-color: black;
   width: 100%;
@@ -32,8 +39,7 @@ const BidBtnText = styled.Text`
 const AuctionTitle = styled.View`
   width: 100%;
   padding-right: 50%;
-  margin-left: 10;
-  margin-top: 10;
+  margin: 10px 0 0 10px;
 `;
 
 const HeaderBottom = styled.View`
@@ -42,46 +48,48 @@ const HeaderBottom = styled.View`
   margin-top: 20;
 `;
 
-const ArtContainer = styled.View`
-  width: 50%;
-  align-items: center;
-  margin-bottom: 10;
-`;
-
 const AuctionContainer = styled.View`
-  margin-top: 50;
-  margin-left: 10;
-  margin-right: 10;
+  margin: 30px 10px 0 10px;
   flex-direction: row;
 `;
 
-const renderItem = ({item}) => {
-  return (
-    <ArtContainer>
-      <Image
-        source={{uri: item.urls.regular}}
-        style={{width: 180, height: 200}}
-      />
-      <Text
-        style={{color: '#abaaaa', fontStyle: 'italic', lineHeight: 20}}
-        numberOfLines={2}>
-        {item.description}
-      </Text>
-      <Text style={{color: '#5f5e5e', lineHeight: 30}}>£ {item.height}</Text>
-    </ArtContainer>
-  );
-};
-const LIMIT = 8;
+const RefineRow = styled.View`
+  align-items: flex-end;
+  margin: 50px 30px 0 30px;
+`;
+
+const SortRow = styled(RefineRow)`
+  align-items: flex-start;
+  margin-top: 10px;
+`;
+
+const RefineBtn = styled.TouchableOpacity`
+  width: 70;
+  border: 1px solid #cecace;
+  border-radius: 5;
+`;
+
+const LIMIT = 4;
 
 const Home = () => {
   const [arts, setArts] = useState([]);
   const [offSet, setOffSet] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [openPopup, setOpenPopup] = useState(false);
+  const [sortName, setSortName] = useState('Random');
+
+  const standardNumber = useSelector((state: any) => {
+    return state.numberReducer.standard;
+  });
+
+  const standardName = useSelector((state: any) => {
+    return state.numberReducer.name;
+  });
 
   const fetchData = () => {
     setLoading(true);
     fetch(
-      'https://api.unsplash.com/search/photos?per_page=100&query=painting&client_id=VAMxSvZ06ScJV5UwwOTs6ZF0XPw9g7XrzCfrkJjwEXk',
+      'https://api.unsplash.com/search/photos?per_page=200&query=painting&client_id=VAMxSvZ06ScJV5UwwOTs6ZF0XPw9g7XrzCfrkJjwEXk',
     )
       .then((res) => res.json())
       .then((res) =>
@@ -94,8 +102,6 @@ const Home = () => {
       .catch((e) => setLoading(false));
   };
 
-  //urls.full or urls.regular
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -107,42 +113,149 @@ const Home = () => {
       fetchData();
     }
   };
-  useEffect(() => {});
+
+  const renderItem = ({item}) => {
+    //A-Z 정렬
+    if (standardNumber === 0) {
+      arts.sort((a: any, b: any) => {
+        if (a.description === null || b.description === null) {
+          return a.description === '';
+        } else {
+          return a.description.localeCompare(b.description);
+        }
+      });
+      setArts(arts);
+      setSortName(standardName);
+
+      return (
+        <AuctionPiece
+          img={item.urls.regular}
+          desc={item.description}
+          price={item.height}
+        />
+      );
+    }
+    if (standardNumber === 1) {
+      arts.sort((a: any, b: any) => b.height - a.height);
+      setArts(arts);
+      setSortName(standardName);
+
+      return (
+        <AuctionPiece
+          img={item.urls.regular}
+          desc={item.description}
+          price={item.height}
+        />
+      );
+    }
+    if (standardNumber === 2) {
+      arts.sort((a: any, b: any) => a.height - b.height);
+      setArts(arts);
+      setSortName(standardName);
+
+      return (
+        <AuctionPiece
+          img={item.urls.regular}
+          desc={item.description}
+          price={item.height}
+        />
+      );
+    }
+  };
+
+  useEffect(() => {
+    renderItem;
+  }, [arts, sortName]);
+
+  const closePopup = (x: boolean) => {
+    setOpenPopup(x);
+  };
+
   return (
-    <SafeAreaView style={{flex: 1}}>
-      <Header>
-        <Image
-          source={{
-            uri:
-              'https://d7hftxdivxxvm.cloudfront.net?resize_to=fill&width=1800&height=600&quality=80&src=https%3A%2F%2Fd32dm0rphc51dk.cloudfront.net%2FLZODmGK5SIjUFKp6p65QJQ%2Fwide.jpg',
-          }}
-          style={{width: '100%', height: 200}}
-        />
-        <AuctionTitle>
-          <Text style={{fontSize: 19, color: '#71a9b9', fontWeight: 'bold'}}>
-            Forum Auctions: The Summer Selection
+    <>
+      <SafeAreaView style={{flex: 1}}>
+        <Header>
+          <View style={{position: 'relative', height: 200}}>
+            <Image
+              style={{position: 'absolute', width: '100%', height: 200}}
+              source={{
+                uri:
+                  'https://d7hftxdivxxvm.cloudfront.net?resize_to=fill&width=1800&height=600&quality=80&src=https%3A%2F%2Fd32dm0rphc51dk.cloudfront.net%2FLZODmGK5SIjUFKp6p65QJQ%2Fwide.jpg',
+              }}
+            />
+            <CountDownContainer>
+              <CountDown
+                until={60 * 60 * 24 * 7}
+                onFinish={() => alert('finished')}
+                size={20}
+                timeLabels={{d: 'DAYS', h: 'HRS', m: 'MIN', s: 'SEC'}}
+                showSeparator={true}
+                digitStyle={{backgroundColor: 'transparent'}}
+                separatorStyle={{color: 'white'}}
+                digitTxtStyle={{color: 'white', marginTop: 20}}
+                timeLabelStyle={{color: 'white'}}
+              />
+            </CountDownContainer>
+          </View>
+          <AuctionTitle>
+            <Text
+              style={{
+                fontSize: 22,
+                color: '#23547f',
+                fontFamily: 'CormorantGaramond-Medium',
+              }}>
+              Forum Auctions: The Summer Selection
+            </Text>
+          </AuctionTitle>
+          <HeaderBottom style={{marginHorizontal: 10}}>
+            <BidBtn>
+              <BidBtnText>Register to bid</BidBtnText>
+            </BidBtn>
+            <Text
+              style={{
+                fontFamily: 'CormorantGaramond-Regular',
+                fontSize: 17,
+                color: '#5e5e5c',
+                marginTop: 8,
+              }}>
+              Registration required to bid
+            </Text>
+          </HeaderBottom>
+        </Header>
+        <RefineRow>
+          <RefineBtn
+            onPress={() => {
+              setOpenPopup(true);
+            }}>
+            <Text
+              style={{
+                fontWeight: 'bold',
+                lineHeight: 30,
+                textAlign: 'center',
+              }}>
+              Refine
+            </Text>
+          </RefineBtn>
+        </RefineRow>
+        <SortRow>
+          <Text
+            style={{fontFamily: 'CormorantGaramond-LightItalic', fontSize: 17}}>
+            {sortName}
           </Text>
-        </AuctionTitle>
-        <HeaderBottom style={{marginHorizontal: 10}}>
-          <BidBtn>
-            <BidBtnText>Register to bid</BidBtnText>
-          </BidBtn>
-          <Text style={{fontSize: 15, color: 'gray', lineHeight: 30}}>
-            Registration required to bid
-          </Text>
-        </HeaderBottom>
-      </Header>
-      <AuctionContainer>
-        <FlatList
-          data={arts}
-          renderItem={renderItem}
-          horizontal={false}
-          numColumns={2}
-          onEndReached={onEndReached}
-          onEndReachedThreshold={0.8}
-        />
-      </AuctionContainer>
-    </SafeAreaView>
+        </SortRow>
+        <AuctionContainer>
+          <FlatList
+            data={arts}
+            renderItem={renderItem}
+            horizontal={false}
+            numColumns={2}
+            onEndReached={onEndReached}
+            onEndReachedThreshold={0.8}
+          />
+        </AuctionContainer>
+      </SafeAreaView>
+      <Popup openPopup={openPopup} closePopup={closePopup} />
+    </>
   );
 };
 export default Home;
